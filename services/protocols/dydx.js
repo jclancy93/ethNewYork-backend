@@ -22,6 +22,7 @@ const parseDydxPositions = (dydxPosition) => {
   const positiveAccountBalances = [];
 
   // Iterate through object and find positive account balances
+  if (!account) return [];
   Object.keys(account.balances).forEach((key) => {
     let asset;
     if (key === '0') asset = 'ETH';
