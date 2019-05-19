@@ -5,31 +5,39 @@ const BN = require('bignumber.js');
  * PRIVATE
  */
 
+const mergeRatesAndPositions = (markets, positions) => {
+  const mergedPositions = positions.map((position) => {
+    const marketForAsset = markets.find(market => market.asset === position.asset && market.type === position.type);
+    const mergedPosition = { ...position, interest: marketForAsset.rate };
+    return mergedPosition;
+  });
+  return mergedPositions;
+};
+
 
 const parseReadableBalance = (balance, decimals) => new BN(balance).shiftedBy(-decimals).toString();
 
-const parseDydxPositions = async (dydxPosition, markets) => {
+const parseDydxPositions = (dydxPosition) => {
   const [account] = dydxPosition.accounts;
   const positiveAccountBalances = [];
 
   // Iterate through object and find positive account balances
   Object.keys(account.balances).forEach((key) => {
     let asset;
-    if (key === '0') asset = 'ETH'
-    else if (key === '1') asset = 'DAI'
-    else asset = 'USDC'
+    if (key === '0') asset = 'ETH';
+    else if (key === '1') asset = 'DAI';
+    else asset = 'USDC';
     account.balances[key].asset = asset;
     if (account.balances[key].wei > '0') positiveAccountBalances.push(account.balances[key]);
   });
 
   const loanPositions = positiveAccountBalances.map((each) => {
-    const marketForAssets = markets.find(market => market.asset === each.asset);
+    
     return {
       protocol: 'dydx',
       asset: each.asset,
       amount: parseReadableBalance(each.wei.split('.')[0], 18),
       type: 'loan',
-      interest: marketForAssets.lendRate,
     };
   });
 
@@ -56,7 +64,7 @@ const getDydxMarkets = async () => {
         name: each.name,
         rate: each.totalSupplyAPY,
         protocol: 'dydx',
-        type: 'lend',
+        type: 'loan',
       }]
     ));
     // return [...parsedMarkets];
@@ -72,9 +80,10 @@ const getDydxPositions = async (address) => {
     const { data } = await axios.get(`https://api.dydx.exchange/v1/accounts/${address}`);
     const markets = await getDydxMarkets();
     const positions = parseDydxPositions(data, markets);
-    return positions;
+    const positionsWithRates = mergeRatesAndPositions(markets, positions);
+    return positionsWithRates;
   } catch (err) {
-    throw new Error('Error attempting to get Dydx positions');
+    throw new Error(err, 'Error attempting to get Dydx positions');
   }
 };
 

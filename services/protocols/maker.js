@@ -11,6 +11,7 @@ const getMakerPosition = async (address) => {
       {
         protocol: 'maker',
         type: 'borrow',
+        asset: 'DAI',
         amount: each.ire.toString(),
         collateral: each.eth.toString(),
         ratio: each.ratio.toString(),

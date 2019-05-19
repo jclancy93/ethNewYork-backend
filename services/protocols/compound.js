@@ -16,7 +16,7 @@ const parseCompoundMarkets = async (marketsArray) => {
       name: tokenInfo.name,
       rate: market.supply_rate.toString(),
       protocol: 'compound',
-      type: 'lend',
+      type: 'loan',
     },
     {
       asset: tokenInfo.symbol,
